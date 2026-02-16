@@ -1,10 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
-const passport = require("passport"); // ✅ Library Load ki
-require("../passport"); // ✅ Config File Load ki (folder ke bahar hai isliye ..)
+const passport = require("passport"); 
+require("../passport"); 
 
-const authRoutes = require("./routes/auth"); // ✅ Route path
+const authRoutes = require("./routes/auth"); 
 const app = express();
 
 // CORS Setup

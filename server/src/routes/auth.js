@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
-const User = require("../models/user.model"); // ✅ Path fixed for src folder
+const User = require("../models/user.model"); 
 
 // Signup Route
 router.post("/signup", async (req, res) => {
