@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ArrowRight, Users, Zap, Bot, LogOut } from "lucide-react";
+import { ArrowRight, Users, Zap, Bot, LogOut, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import toast from "react-hot-toast";
@@ -9,23 +9,24 @@ const Home = () => {
   const navigate = useNavigate();
   const [roomId, setRoomId] = useState("");
   const [username, setUsername] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // ✅ 1. Auth Check & Username Autofill
+  // ✅ 1. Auth Check & Persistence
   useEffect(() => {
     const checkUser = async () => {
-      // Step A: LocalStorage Check (Email login walon ke liye)
       const localUser = JSON.parse(localStorage.getItem("user"));
       if (localUser) {
         setUsername(localUser.username || localUser.email?.split("@")[0]);
         return;
       }
 
-      // Step B: Server Check (Google/GitHub login walon ke liye)
       try {
         const res = await axios.get("http://localhost:3001/api/user", {
           withCredentials: true,
         });
         if (res.data) {
+          // Sync server data with localStorage for persistence
+          localStorage.setItem("user", JSON.stringify(res.data));
           setUsername(res.data.username || res.data.email?.split("@")[0]);
         } else {
           navigate("/login");
@@ -37,141 +38,165 @@ const Home = () => {
     checkUser();
   }, [navigate]);
 
-  // ✅ 2. Generate New Room ID
+  // ✅ 2. Generate Unique Room ID
   const createNewRoom = (e) => {
     e.preventDefault();
     const id = uuidv4();
     setRoomId(id);
-    toast.success("Created a new Room ID! 🎉");
+    toast.success("New Room ID generated! 📋");
   };
 
-  // ✅ 3. Join Room Logic
+  // ✅ 3. Join Room with UX Feedback
   const joinRoom = () => {
     if (!roomId || !username) {
-      toast.error("Room ID & Username are required!");
+      toast.error("Please provide both Room ID and Username");
       return;
     }
-    // Editor page par Username pass karna zaroori hai
-    navigate(`/editor/${roomId}`, {
-      state: { username },
-    });
+
+    setIsLoading(true);
+    // Passing data via location state for the EditorPage
+    setTimeout(() => {
+      navigate(`/editor/${roomId}`, {
+        state: { username },
+      });
+    }, 500);
   };
 
   const handleInputEnter = (e) => {
-    if (e.code === "Enter") {
-      joinRoom();
-    }
+    if (e.code === "Enter") joinRoom();
   };
 
-  // ✅ 4. Logout Logic
+  // ✅ 4. Clean Logout Logic
   const logout = () => {
     localStorage.removeItem("user");
+    toast.loading("Logging out...");
     window.location.href = "http://localhost:3001/auth/logout";
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center relative overflow-hidden">
-      {/* --- Header (Logout Button) --- */}
-      <div className="absolute top-5 right-5 z-10">
+    <div className="min-h-screen bg-[#0B0F1A] text-white flex flex-col items-center relative overflow-hidden font-sans">
+      {/* Dynamic Background Gradients */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/20 blur-[150px] rounded-full opacity-50"></div>
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 blur-[150px] rounded-full opacity-50"></div>
+
+      {/* Logout Header */}
+      <div className="absolute top-6 right-8 z-20">
         <button
           onClick={logout}
-          className="flex items-center gap-2 bg-gray-800 hover:bg-red-500/10 hover:text-red-400 border border-gray-700 hover:border-red-500/50 px-4 py-2 rounded-lg transition text-sm font-medium text-gray-400"
+          className="group flex items-center gap-2 bg-white/5 hover:bg-red-500/20 px-5 py-2.5 rounded-full border border-white/10 hover:border-red-500/30 transition-all duration-300"
         >
-          <LogOut className="w-4 h-4" /> Logout
+          <LogOut className="w-4 h-4 text-gray-400 group-hover:text-red-400" />
+          <span className="text-sm font-semibold text-gray-400 group-hover:text-red-400">
+            Exit Session
+          </span>
         </button>
       </div>
 
-      <div className="pt-24 flex flex-col items-center justify-center text-center px-4 w-full max-w-4xl">
-        {/* Badge */}
-        <div className="mb-6 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium animate-fade-in-up">
-          🚀 AI-Powered Real-time Coding
+      <div className="mt-32 flex flex-col items-center text-center px-6 max-w-5xl z-10">
+        {/* Animated Badge */}
+        <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest animate-pulse">
+          <Sparkles className="w-3.5 h-3.5" /> Next-Gen Collab Editor
         </div>
 
-        {/* Heading */}
-        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
-          Code Together, <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            Build Faster.
+        <h1 className="text-6xl md:text-8xl font-black mb-8 leading-[1.1] tracking-tight">
+          Code in{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500">
+            Real-Time.
           </span>
+          <br /> Ship as a Team.
         </h1>
 
-        <p className="text-lg md:text-xl text-gray-400 max-w-2xl mb-10">
-          Real-time collaborative code editor with built-in AI analysis. Detect
-          bugs, merge conflicts, and optimize code instantly.
+        <p className="text-gray-400 text-lg md:text-xl max-w-2xl mb-12 font-medium leading-relaxed">
+          The ultimate workspace for remote developers. Experience seamless
+          sync, AI debugging, and multiplayer coding in one secure environment.
         </p>
 
-        {/* --- Main Input Section --- */}
-        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 p-6 rounded-2xl w-full max-w-lg shadow-2xl">
-          {/* Input Group */}
-          <div className="flex flex-col gap-4">
-            {/* Username Input (Editable) */}
+        {/* --- Main Control Panel --- */}
+        <div className="w-full max-w-lg bg-[#151B28]/80 backdrop-blur-xl border border-white/10 p-10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <div className="space-y-6">
             <div className="text-left">
-              <label className="text-xs text-gray-400 ml-1 mb-1 block">
-                Username
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-2 mb-2 block">
+                Developer Alias
               </label>
               <input
                 type="text"
-                placeholder="Enter Username"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                className="w-full bg-[#0B0F1A] border border-white/5 rounded-2xl px-5 py-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all placeholder:text-gray-700"
+                placeholder="Your name or handle..."
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyUp={handleInputEnter}
               />
             </div>
 
-            {/* Room ID Input */}
             <div className="text-left">
-              <label className="text-xs text-gray-400 ml-1 mb-1 block">
-                Room ID
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-2 mb-2 block">
+                Session Gateway (Room ID)
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
-                  placeholder="Paste Room ID"
-                  className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  className="flex-1 bg-[#0B0F1A] border border-white/5 rounded-2xl px-5 py-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all placeholder:text-gray-700 font-mono text-sm"
+                  placeholder="Paste invitation code..."
                   value={roomId}
                   onChange={(e) => setRoomId(e.target.value)}
                   onKeyUp={handleInputEnter}
                 />
                 <button
                   onClick={joinRoom}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-lg font-medium transition flex items-center gap-2"
+                  disabled={isLoading}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
                 >
-                  Join <ArrowRight className="w-4 h-4" />
+                  {isLoading ? "Connecting..." : "Enter"}{" "}
+                  <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-10">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
+              <div className="w-full border-t border-white/5"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800 text-gray-400">or</span>
+            <div className="relative flex justify-center text-[10px]">
+              <span className="px-4 bg-[#151B28] text-gray-600 font-black uppercase tracking-widest">
+                New Session?
+              </span>
             </div>
           </div>
 
-          {/* Create Room Button */}
           <button
             onClick={createNewRoom}
-            className="w-full py-3 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 border-dashed rounded-xl font-medium transition text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded-2xl font-bold transition-all text-blue-400 flex items-center justify-center gap-2 group"
           >
-            Generate Unique Room ID
+            Create Private Workspace
           </button>
         </div>
 
-        {/* Feature Icons */}
-        <div className="mt-16 flex flex-wrap justify-center gap-8 text-gray-500 pb-10">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-500" /> Real-time Sync
+        {/* Tech Indicators */}
+        <div className="mt-20 grid grid-cols-3 gap-12 text-gray-600">
+          <div className="flex flex-col items-center gap-3">
+            <div className="p-3 rounded-2xl bg-white/5">
+              <Zap className="w-6 h-6 text-yellow-500/80" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-tighter">
+              Sync Mode: Active
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-purple-500" /> AI Assistant
+          <div className="flex flex-col items-center gap-3">
+            <div className="p-3 rounded-2xl bg-white/5">
+              <Bot className="w-6 h-6 text-purple-500/80" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-tighter">
+              AI Core: Online
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-green-500" /> Multiplayer
+          <div className="flex flex-col items-center gap-3">
+            <div className="p-3 rounded-2xl bg-white/5">
+              <Users className="w-6 h-6 text-green-500/80" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-tighter">
+              Multiplayer: Ready
+            </span>
           </div>
         </div>
       </div>

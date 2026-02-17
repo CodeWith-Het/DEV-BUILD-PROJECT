@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { Github, Mail, Lock, ArrowRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
 const Login = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -38,12 +37,10 @@ const Login = () => {
       if (res.status === 200) {
         toast.success("Login Successful! 🚀");
 
-        // User data save karo
         localStorage.setItem("user", JSON.stringify(res.data.user));
 
-        // Redirect to Home
         setTimeout(() => {
-          navigate("/");
+          window.location.href = "/"; 
         }, 1000);
       }
     } catch (err) {
