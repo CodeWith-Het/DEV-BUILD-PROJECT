@@ -16,14 +16,13 @@ const Home = () => {
     const checkUser = async () => {
       const localUser = JSON.parse(localStorage.getItem("user"));
       if (localUser) {
+        // Pre-fill, but still verify server session exists.
         setUsername(localUser.username || localUser.email?.split("@")[0]);
-        return;
       }
 
       try {
-        const res = await axios.get("http://localhost:3001/api/user", {
-          withCredentials: true,
-        });
+        // Use same-origin relative URL so Vite proxy handles CORS/cookies.
+        const res = await axios.get("/api/user", { withCredentials: true });
         if (res.data) {
           // Sync server data with localStorage for persistence
           localStorage.setItem("user", JSON.stringify(res.data));
@@ -31,7 +30,9 @@ const Home = () => {
         } else {
           navigate("/login");
         }
-      } catch (err) {
+      } catch {
+        // If server session is missing/expired, clear local cache and force re-login.
+        localStorage.removeItem("user");
         navigate("/login");
       }
     };
@@ -70,7 +71,8 @@ const Home = () => {
   const logout = () => {
     localStorage.removeItem("user");
     toast.loading("Logging out...");
-    window.location.href = "http://localhost:3001/auth/logout";
+    // Same-origin via Vite proxy.
+    window.location.href = "/auth/logout";
   };
 
   return (

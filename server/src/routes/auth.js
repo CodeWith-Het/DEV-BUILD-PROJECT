@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
-const User = require("../models/user.model"); 
+const User = require("../models/user.model");
 
 // Signup Route
 router.post("/signup", async (req, res) => {
@@ -33,10 +33,21 @@ router.post("/login", async (req, res) => {
     if (user.password !== password)
       return res.status(400).json({ message: "Invalid Credentials" });
 
-    res.status(200).json({
-      message: "Login Successful",
-      user: { _id: user._id, email: user.email, username: user.username },
+    // Create a Passport session so `req.user` is available on subsequent requests.
+    // This is required for routes protected by [`requireAuth()`](DEV-BUILD-PROJECT/server/src/routes/ai.js:5).
+    req.login(user, (err) => {
+      if (err) return res.status(500).json({ message: "Login failed" });
+
+      // Ensure session is persisted before responding (avoids race where Set-Cookie is not sent).
+      req.session.save(() => {
+        return res.status(200).json({
+          message: "Login Successful",
+          user: { _id: user._id, email: user.email, username: user.username },
+        });
+      });
     });
+
+    return;
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
   }

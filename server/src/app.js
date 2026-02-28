@@ -1,11 +1,17 @@
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
-const passport = require("passport"); 
-require("../passport"); 
+const passport = require("passport");
+require("../passport");
 
-const authRoutes = require("./routes/auth"); 
+const authRoutes = require("./routes/auth");
+const aiRoutes = require("./routes/ai");
 const app = express();
+
+const isProd = process.env.NODE_ENV === "production";
+
+// If deployed behind a reverse proxy (e.g., Render/Heroku/Nginx), secure cookies require trust proxy.
+if (isProd) app.set("trust proxy", 1);
 
 // CORS Setup
 app.use(
@@ -16,20 +22,30 @@ app.use(
   }),
 );
 
-app.use(express.json());
+// Prevent excessively large JSON payloads (AI prompts/code can otherwise be abused).
+app.use(express.json({ limit: "1mb" }));
 
 // Session Setup
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "secret",
+    // Never use a predictable default secret in production.
+    secret: isProd
+      ? process.env.SESSION_SECRET
+      : process.env.SESSION_SECRET || "dev_secret_change_me",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false,
+      secure: isProd,
+      httpOnly: true,
+      sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24,
     },
   }),
 );
+
+if (isProd && !process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET must be set in production");
+}
 
 // Passport Init
 app.use(passport.initialize());
@@ -37,6 +53,7 @@ app.use(passport.session());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Google Routes
 app.get(

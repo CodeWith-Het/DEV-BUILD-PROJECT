@@ -10,13 +10,13 @@ const Login = () => {
 
   // ✅ 1. Google Login Function (Fix)
   const handleGoogleLogin = () => {
-    // Seedha backend URL par redirect karna hai
-    window.location.href = "http://localhost:3001/auth/google";
+    // Go through Vite proxy so cookies stay on the frontend origin.
+    window.location.href = "/auth/google";
   };
 
   // ✅ 2. GitHub Login Function (Fix)
   const handleGithubLogin = () => {
-    window.location.href = "http://localhost:3001/auth/github";
+    window.location.href = "/auth/github";
   };
 
   // ✅ 3. Email/Password Login Function
@@ -29,10 +29,17 @@ const Login = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:3001/api/auth/login", {
-        email,
-        password,
-      });
+      const res = await axios.post(
+        "/api/auth/login",
+        {
+          email,
+          password,
+        },
+        {
+          // Required so the browser stores the session cookie from the backend.
+          withCredentials: true,
+        },
+      );
 
       if (res.status === 200) {
         toast.success("Login Successful! 🚀");
@@ -40,7 +47,7 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify(res.data.user));
 
         setTimeout(() => {
-          window.location.href = "/"; 
+          window.location.href = "/";
         }, 1000);
       }
     } catch (err) {
