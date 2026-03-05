@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Github, Mail, Lock, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -8,18 +8,30 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ✅ 1. Google Login Function (Fix)
+  // ✅ 1. Initialize useNavigate
+  const navigate = useNavigate();
+
+  // ✅ 2. ROUTE GUARD: Check if user is already logged in
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      // User is logged in, redirect to home page immediately
+      navigate("/");
+    }
+  }, [navigate]);
+
+  // ✅ 3. Google Login Function (Fix)
   const handleGoogleLogin = () => {
     // Go through Vite proxy so cookies stay on the frontend origin.
     window.location.href = "/auth/google";
   };
 
-  // ✅ 2. GitHub Login Function (Fix)
+  // ✅ 4. GitHub Login Function (Fix)
   const handleGithubLogin = () => {
     window.location.href = "/auth/github";
   };
 
-  // ✅ 3. Email/Password Login Function
+  // ✅ 5. Email/Password Login Function
   const handleLogin = async (e) => {
     e.preventDefault();
 

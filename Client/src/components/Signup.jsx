@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Github, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -6,6 +6,14 @@ import toast from "react-hot-toast";
 
 const Signup = () => {
   const navigate = useNavigate();
+
+  // ✅ ROUTE GUARD: Agar user pehle se login hai, toh wapas Home pe bhej do
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      navigate("/");
+    }
+  }, [navigate]);
 
   // States for form inputs
   const [username, setUsername] = useState("");

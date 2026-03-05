@@ -1,9 +1,12 @@
 require("dotenv").config();
+const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
 const app = require("./src/app");
 const server = http.createServer(app);
+
+app.use(cors());
 
 // OT functions (Ensure these exist in your src/ot/textOt.js)
 const { applyOp, transform } = require("./src/ot/textOt");
@@ -160,6 +163,6 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`SERVER RUNNING ON PORT ${PORT} 🚀`);
 });

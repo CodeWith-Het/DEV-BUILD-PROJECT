@@ -9,11 +9,10 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      // required: true,  <-- ISSE HATA DE YA COMMENT KAR DE
     },
-    googleId: { type: String }, // Google walon ke liye
-    githubId: { type: String }, // GitHub walon ke liye
-    username: { type: String }, // Naam store karne ke liye
+    googleId: { type: String }, 
+    githubId: { type: String }, 
+    username: { type: String }, 
   },
   { timestamps: true },
 );

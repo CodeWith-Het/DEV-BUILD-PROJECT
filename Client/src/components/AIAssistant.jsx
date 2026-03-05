@@ -1,94 +1,103 @@
-import React, { useMemo, useState } from "react";
-import axios from "axios";
-import { Bot, Loader2, Sparkles } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import React, { useState } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
+import {toast} from "react-hot-toast"
+import ReactMarkdown from "react-markdown"; // AI ka response sundar dikhane ke liye
+// import analyzeCode from "../services/aiService"; // Aapka AI logic file
 
-export default function AIAssistant({ code, language }) {
-  const [prompt, setPrompt] = useState("Review this code, find bugs, and suggest improvements.");
-  const [result, setResult] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+const AIAssistant = ({ code, language }) => {
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const canSend = useMemo(() => Boolean((prompt ?? "").trim()), [prompt]);
+  const handleAnalyze = async () => {
+    if (!code) return toast.error("Bhai, pehle kuch code toh likho!");
 
-  const run = async () => {
-    if (!canSend) return;
-    setIsLoading(true);
-    setResult("");
+    setLoading(true);
     try {
-      const res = await axios.post("/api/ai/analyze", { code, language, prompt }, { withCredentials: true });
-      setResult(res.data?.text || "No response");
-    } catch (e) {
-      setResult(e?.response?.data?.message || "AI request failed.");
+      const res = await fetch("/api/ai/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, language }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Server ne response nahi diya");
+      }
+
+      const data = await res.json();
+      setResponse(data.review || data.text);
+    } catch (err) {
+      console.error(err);
+      setResponse("Kuch gadbad ho gayi, server check karo.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#1E1E1E] border-l border-gray-800 text-gray-300">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-[#151B28]">
-        <div className="flex items-center gap-2">
-          <Bot className="w-5 h-5 text-purple-400" />
-          <span className="font-bold text-white">AI Code Reviewer</span>
-        </div>
+    <div className="flex flex-col h-full bg-[#1E1E1E] text-gray-300 p-4">
+      <div className="flex items-center gap-2 mb-4 border-b border-gray-800 pb-3">
+        <Sparkles className="w-5 h-5 text-purple-400" />
+        <h2 className="font-bold text-lg">AI Code Reviewer</h2>
       </div>
-
-      {/* Chat / Output Area */}
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-        {!result ? (
-          <div className="text-sm text-gray-500 text-center mt-10">
-            Click "Review Code" to analyze the current file.
+      {/* Response Area */}
+      <div className="flex-1 overflow-y-auto mb-4 pr-2 custom-scrollbar transition-all duration-300">
+        {!response && !loading ? (
+          <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
+            <div className="p-4 bg-gray-800/50 rounded-full mb-3">
+              <Sparkles className="w-8 h-8 text-indigo-400" />
+            </div>
+            <p className="text-sm font-medium">Ready to review your code</p>
+            <p className="text-[11px] mt-1">
+              Select a file and click the button below
+            </p>
           </div>
         ) : (
-          <div className="prose prose-invert max-w-none text-sm space-y-4">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                code({ node, inline, className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || "");
-                  return !inline && match ? (
-                    <SyntaxHighlighter
-                      style={vscDarkPlus}
-                      language={match[1]}
-                      PreTag="div"
-                      className="rounded-lg text-[13px] my-2"
-                      {...props}
-                    >
-                      {String(children).replace(/\n$/, "")}
-                    </SyntaxHighlighter>
-                  ) : (
-                    <code className="bg-gray-800 px-1.5 py-0.5 rounded text-red-400 font-mono text-[12px]" {...props}>
-                      {children}
-                    </code>
-                  );
-                },
-                p: ({ children }) => <p className="mb-2 text-gray-300">{children}</p>,
-                ul: ({ children }) => <ul className="space-y-1 my-2 text-gray-300">{children}</ul>,
-                li: ({ children }) => <li className="flex items-start gap-2">{children}</li>,
-                strong: ({ children }) => <strong className="text-white font-bold">{children}</strong>,
-              }}
-            >
-              {result}
-            </ReactMarkdown>
+          <div className="prose prose-invert max-w-none text-sm leading-relaxed animate-in fade-in duration-500">
+            {/* Agar response hai toh Markdown dikhao */}
+            {response && <ReactMarkdown>{response}</ReactMarkdown>}
+
+            {/* Loading state ke waqt ek chota placeholder skeleton bhi dikha sakte ho */}
+            {loading && (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-700 rounded w-full"></div>
+                <div className="h-4 bg-gray-700 rounded w-5/6"></div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-[#151B28] border-t border-gray-800">
+      {/* Analyze Button */}
+      <div className="pt-4 border-t border-gray-800">
         <button
-          onClick={run}
-          disabled={!canSend || isLoading}
-          className="w-full mb-3 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50 transition-all"
+          onClick={handleAnalyze}
+          disabled={loading || !code}
+          className={`
+      flex items-center justify-center gap-3 w-full py-3 px-4 
+      font-bold rounded-xl transition-all duration-200 
+      ${
+        loading
+          ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+          : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg active:scale-95"
+      }
+    `}
         >
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {isLoading ? "Analyzing Code..." : "Review Code"}
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span className="tracking-wide">Analyzing Code...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              <span className="tracking-wide">Review Code</span>
+            </>
+          )}
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default AIAssistant;
