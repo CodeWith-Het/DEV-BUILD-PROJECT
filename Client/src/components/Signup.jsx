@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 const Signup = () => {
   const navigate = useNavigate();
 
-  // ✅ ROUTE GUARD: Agar user pehle se login hai, toh wapas Home pe bhej do
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) {
