@@ -2,57 +2,58 @@ const express = require("express");
 const router = express.Router();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// ✅ FIX 1: .trim() lagaya taaki .env file mein galti se space ho toh wo hat jaye
+// ✅ FIX: .trim() lagaya taaki .env file mein galti se space ho toh wo hat jaye
 const apiKey = (process.env.GEMINI_API_KEY || "").trim();
 const genAI = new GoogleGenerativeAI(apiKey);
 
 router.post("/analyze", async (req, res) => {
-  const { code, language } = req.body;
+  const { code, language, prompt: customPrompt } = req.body;
 
   try {
-    // ✅ FIX 2: Latest aur sabse fast model use kiya hai jo abhi active hai
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    
+    // Default instruction if user didn't type a custom prompt
+    const userInstruction = customPrompt ? customPrompt : "Review this code, find bugs, and suggest improvements.";
 
-    const prompt = `You are an expert ${language} developer code reviewer.
-Analyze the provided code, find bugs, bad practices, and address them.
+    // ✅ NAYA PROMPT: AI ko strictly JSON return karne bol rahe hain
+    const finalPrompt = `
+You are an expert ${language} developer.
+User's Request: "${userInstruction}"
 
-You MUST format your response EXACTLY like this using Markdown and these specific emojis:
-
-❌ **Bad Code:**
+Analyze this code:
 \`\`\`${language}
-(Show the problematic part of the code here)
+${code || "// No code provided"}
 \`\`\`
 
-🔘 **Issues:**
-* ❌ (Issue 1 description)
-* ❌ (Issue 2 description)
-
-✅ **Recommended Fix:**
-\`\`\`${language}
-(Show the corrected, fully documented, and optimized code here)
-\`\`\`
-
-💡 **Improvements:**
-* ✔️ (Improvement 1 explanation)
-* ✔️ (Improvement 2 explanation)
-
-Keep explanations concise.
-
-Code to analyze:
-\`\`\`${language}
-${code}
-\`\`\`
+You MUST respond STRICTLY with a valid JSON object. DO NOT wrap it in markdown blockquotes like \`\`\`json. Just output the raw JSON.
+The JSON MUST match this exact structure:
+{
+  "scores": [
+    { "subject": "Quality", "score": <number 0-100> },
+    { "subject": "Performance", "score": <number 0-100> },
+    { "subject": "Readability", "score": <number 0-100> },
+    { "subject": "Security", "score": <number 0-100> }
+  ],
+  "review": "Your detailed code review in Markdown format (use emojis like ❌, 🔘, ✅, 💡). Use \\n for newlines."
+}
 `;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const result = await model.generateContent(finalPrompt);
+    let text = result.response.text();
 
-    res.json({ review: text });
+    // ✅ JSON Formatting safeguard (agar AI galti se ```json laga de toh use hata do)
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    
+    // JSON parse karo aur bhej do
+    const parsedData = JSON.parse(text);
+    res.json(parsedData);
+
   } catch (error) {
     console.error("AI Error:", error.message || error);
-    res
-      .status(500)
-      .json({ error: "AI Analysis failed. Check server console." });
+    res.status(500).json({ 
+      error: "AI Analysis failed.", 
+      review: "⚠️ Error parsing AI response. Please try again." 
+    });
   }
 });
 

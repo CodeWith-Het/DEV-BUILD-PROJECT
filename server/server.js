@@ -20,12 +20,17 @@ const io = new Server(server, {
 
 // User Mapping (Socket ID -> Username)
 const userSocketMap = {};
-// Document State Mapping
+
+// ✅ NEW: File structures track karne ke liye (Folder/File Sync)
+const roomFileTrees = new Map();
+
+// ✅ UPDATED: Ab har file ka apna alag data hoga (Key: roomId_fileId)
 const roomDocs = new Map();
 
-function getOrCreateRoomDoc(roomId) {
-  if (!roomDocs.has(roomId)) {
-    roomDocs.set(roomId, {
+function getOrCreateFileDoc(roomId, fileId) {
+  const key = `${roomId}_${fileId}`;
+  if (!roomDocs.has(key)) {
+    roomDocs.set(key, {
       text: "",
       version: 0,
       history: [],
@@ -33,7 +38,7 @@ function getOrCreateRoomDoc(roomId) {
       language: "javascript",
     });
   }
-  return roomDocs.get(roomId);
+  return roomDocs.get(key);
 }
 
 function getAllConnectedClients(roomId) {
@@ -54,7 +59,7 @@ mongoose
 io.on("connection", (socket) => {
   console.log(`Socket Connected: ${socket.id}`);
 
-  // ✅ SMART JOIN LOGIC: Fixes the Leave & Rejoin "Ghost" Issue
+  // ✅ SMART JOIN LOGIC
   socket.on("join", ({ roomId, username }) => {
     if (!username) return; // Failsafe
 
@@ -82,13 +87,10 @@ io.on("connection", (socket) => {
     userSocketMap[socket.id] = username;
     socket.join(roomId);
 
-    // Send initial document state
-    const doc = getOrCreateRoomDoc(roomId);
-    socket.emit("doc_init", {
-      text: doc.text,
-      version: doc.version,
-      language: doc.language,
-    });
+    // ✅ NEW: Jab naya user aaye, toh usko existing files aur folders dikhao
+    if (roomFileTrees.has(roomId)) {
+      socket.emit("file_structure_update", roomFileTrees.get(roomId));
+    }
 
     // Broadcast to EVERYONE in the room so the sidebar updates instantly
     const updatedClients = getAllConnectedClients(roomId);
@@ -99,16 +101,36 @@ io.on("connection", (socket) => {
     });
   });
 
-  // ✅ OT-based code sync logic
-  socket.on("ot_op", ({ roomId, op, baseVersion }) => {
-    if (!roomId || !op) return;
+  // ✅ NEW: Jab koi Admin nayi file/folder banaye toh sabko update bhejo
+  socket.on("file_structure_change", ({ roomId, files }) => {
+    if (!roomId) return;
+    roomFileTrees.set(roomId, files); // Server par save karo
+    socket.to(roomId).emit("file_structure_update", files); // Doosre users ko dikhao
+  });
 
-    const doc = getOrCreateRoomDoc(roomId);
+  // ✅ NEW: Jab user dusri file par click kare toh us file ka latest code bhejo
+  socket.on("request_file_sync", ({ roomId, fileId }) => {
+    if (!roomId || !fileId) return;
+    const doc = getOrCreateFileDoc(roomId, fileId);
+    socket.emit("doc_init", {
+      fileId,
+      text: doc.text,
+      version: doc.version,
+      language: doc.language,
+    });
+  });
+
+  // ✅ UPDATED: OT Logic ab sirf specific 'fileId' ke liye kaam karegi
+  socket.on("ot_op", ({ roomId, fileId, op, baseVersion }) => {
+    if (!roomId || !fileId || !op) return;
+
+    const doc = getOrCreateFileDoc(roomId, fileId);
     let incoming = op;
     const base = Number.isFinite(baseVersion) ? baseVersion : doc.version;
 
     if (base < (doc.historyStartVersion || 0) - 1) {
       return socket.emit("doc_init", {
+        fileId,
         text: doc.text,
         version: doc.version,
         language: doc.language,
@@ -130,18 +152,22 @@ io.on("connection", (socket) => {
       doc.historyStartVersion = doc.history[0].version;
     }
 
+    // ✅ Emit karte waqt fileId sath bhejo taaki galat file me type na ho
     io.to(roomId).emit("ot_applied", {
+      fileId,
       op: incoming,
       version: doc.version,
       authorSocketId: socket.id,
     });
   });
 
-  // ✅ Language Sync logic
-  socket.on("language_change", ({ roomId, language }) => {
-    const doc = getOrCreateRoomDoc(roomId);
-    doc.language = language;
-    io.to(roomId).emit("language_changed", { language });
+  // ✅ Language Sync logic (File specific)
+  socket.on("language_change", ({ roomId, fileId, language }) => {
+    if (roomId && fileId) {
+      const doc = getOrCreateFileDoc(roomId, fileId);
+      doc.language = language;
+    }
+    io.to(roomId).emit("language_changed", { language, fileId });
   });
 
   // ✅ Disconnect logic
@@ -153,9 +179,18 @@ io.on("connection", (socket) => {
         username: userSocketMap[socket.id],
       });
 
+      // Cleanup logic if room is empty
       if (roomId !== socket.id) {
         const room = io.sockets.adapter.rooms.get(roomId);
-        if (!room || room.size <= 1) roomDocs.delete(roomId);
+        if (!room || room.size <= 1) {
+          // Clear memory for this room's files
+          roomFileTrees.delete(roomId);
+          for (let key of roomDocs.keys()) {
+            if (key.startsWith(roomId + "_")) {
+              roomDocs.delete(key);
+            }
+          }
+        }
       }
     });
     delete userSocketMap[socket.id];

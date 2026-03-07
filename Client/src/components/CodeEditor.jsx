@@ -82,11 +82,15 @@ export default function CodeEditor({
     editorRef.current = editor;
   };
 
-  // Handle file selection - load file content
+  // ✅ 1. Handle file selection - Request latest code from server for specific file
   useEffect(() => {
     if (selectedFile?.id) {
       const fileId = selectedFile.id;
-      // If we have cached content, use it; otherwise use default empty
+
+      // Server se request karo latest sync ke liye
+      socketRef.current?.emit("request_file_sync", { roomId, fileId });
+
+      // Tab tak local cache dikhao taaki UI fast lage
       const content = fileContent[fileId] ?? selectedFile.content ?? "";
       suppressRef.current = true;
       setCode(content);
@@ -94,13 +98,17 @@ export default function CodeEditor({
       onCodeChange?.(content);
       setTimeout(() => (suppressRef.current = false), 0);
     }
-  }, [selectedFile?.id]);
+  }, [selectedFile?.id, roomId, socketRef]);
 
+  // ✅ 2. Handle Socket Events (Listen only for current selected file)
   useEffect(() => {
     const socket = socketRef?.current;
     if (!socket) return;
 
-    const onInit = ({ text, version: v }) => {
+    const onInit = ({ fileId, text, version: v }) => {
+      // Agar server kisi aur file ka code bheje, toh ignore karo
+      if (selectedFile?.id !== fileId) return;
+
       suppressRef.current = true;
       const val = text ?? "";
       setCode(val);
@@ -110,8 +118,11 @@ export default function CodeEditor({
       setTimeout(() => (suppressRef.current = false), 0);
     };
 
-    const onApplied = ({ op, version: v, authorSocketId }) => {
-      // ✅ Agar main khud type kar raha hu, toh usko wapas ignore karo
+    const onApplied = ({ fileId, op, version: v, authorSocketId }) => {
+      // ✅ YEH THA MAIN BUG FIX: Agar type dusri file me ho raha hai, toh is file me mat dikhao!
+      if (selectedFile?.id !== fileId) return;
+
+      // Agar main khud type kar raha hu, toh usko wapas ignore karo
       if (authorSocketId && socket.id && authorSocketId === socket.id) {
         setVersion((prev) => (typeof v === "number" ? v : prev));
         return;
@@ -136,7 +147,7 @@ export default function CodeEditor({
       socket.off("doc_init", onInit);
       socket.off("ot_applied", onApplied);
     };
-  }, [socketRef, onCodeChange]);
+  }, [socketRef, onCodeChange, selectedFile?.id]);
 
   const handleChange = (value) => {
     const next = value ?? "";
@@ -164,19 +175,25 @@ export default function CodeEditor({
       }));
     }
 
-    // ✅ YEH THA MISSING LOGIC: Doosre users ko bhej do!
-    if (socketRef.current && roomId && op) {
+    // ✅ Emit karte waqt fileId sath bhejna hai taaki server sahi jagah save kare
+    if (socketRef.current && roomId && selectedFile?.id && op) {
       if (Array.isArray(op)) {
         op.forEach((single) =>
           socketRef.current.emit("ot_op", {
             roomId,
+            fileId: selectedFile.id,
             op: single,
             baseVersion: version,
           }),
         );
         setVersion((prevV) => prevV + op.length);
       } else {
-        socketRef.current.emit("ot_op", { roomId, op, baseVersion: version });
+        socketRef.current.emit("ot_op", {
+          roomId,
+          fileId: selectedFile.id,
+          op,
+          baseVersion: version,
+        });
         setVersion((prevV) => prevV + 1);
       }
     }
@@ -185,13 +202,17 @@ export default function CodeEditor({
   return (
     <div className="w-full h-full bg-[#1E1E1E] flex flex-col border-t border-gray-800/50">
       {/* File Tab Header */}
-      {selectedFile && (
+      {selectedFile ? (
         <div className="bg-gray-900/80 border-b border-gray-700 px-4 py-2 flex items-center gap-2 text-sm">
           <span className="text-gray-300">📄</span>
           <span className="text-white font-medium">{selectedFile.name}</span>
           <span className="text-gray-500 text-xs ml-auto">
-            {selectedFile.type === "file" && "(Local)"}
+            {selectedFile.type === "file" && "(Synced)"}
           </span>
+        </div>
+      ) : (
+        <div className="bg-gray-900/80 border-b border-gray-700 px-4 py-2 flex items-center text-sm text-gray-500">
+          No file selected
         </div>
       )}
 
@@ -213,6 +234,7 @@ export default function CodeEditor({
             padding: { top: 30, bottom: 20 },
             scrollBeyondLastLine: false,
             fontFamily: "'Fira Code', Consolas, monospace",
+            readOnly: !selectedFile, // ✅ Agar koi file select nahi ki toh type nahi kar payega
           }}
         />
       </div>
