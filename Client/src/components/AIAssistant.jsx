@@ -26,7 +26,10 @@ const AIAssistant = ({ code, language }) => {
   const handleAnalyze = async (customPrompt = null) => {
     if (!code) return toast.error("Bhai, pehle kuch code toh likho!");
 
-    const finalPrompt = customPrompt || userPrompt || "Review this code and give me quality metrics.";
+    const finalPrompt =
+      customPrompt ||
+      userPrompt ||
+      "Review this code and give me quality metrics.";
 
     setLoading(true);
     setScores(null);
@@ -74,12 +77,12 @@ const AIAssistant = ({ code, language }) => {
             </div>
             <p className="text-sm font-medium">Ask AI about your code</p>
             <p className="text-[11px] mt-1 text-center px-4">
-              Type a prompt below or use the quick actions to get a review and code metrics.
+              Type a prompt below or use the quick actions to get a review and
+              code metrics.
             </p>
           </div>
         ) : (
           <div className="animate-in fade-in duration-500">
-            
             {/* RADAR CHART */}
             {scores && (
               <div className="mb-6 p-4 bg-[#151B28] border border-gray-800 rounded-xl shadow-lg">
@@ -91,9 +94,17 @@ const AIAssistant = ({ code, language }) => {
                 </div>
                 <div className="h-48 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={scores}>
+                    <RadarChart
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="70%"
+                      data={scores}
+                    >
                       <PolarGrid stroke="#374151" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: "#9CA3AF", fontSize: 11 }} />
+                      <PolarAngleAxis
+                        dataKey="subject"
+                        tick={{ fill: "#9CA3AF", fontSize: 11 }}
+                      />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "#1F2937",
@@ -102,7 +113,13 @@ const AIAssistant = ({ code, language }) => {
                         }}
                         itemStyle={{ color: "#8B5CF6", fontWeight: "bold" }}
                       />
-                      <Radar name="Score" dataKey="score" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.4} />
+                      <Radar
+                        name="Score"
+                        dataKey="score"
+                        stroke="#8B5CF6"
+                        fill="#8B5CF6"
+                        fillOpacity={0.4}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
@@ -114,36 +131,57 @@ const AIAssistant = ({ code, language }) => {
               {response && (
                 <ReactMarkdown
                   components={{
-                    // 'node' aur 'inline' ko destructure kar rahe hain taaki vo neeche spread (...props) me na chale jayein
+                    // 'node' ko destructure kar rahe hain taaki vo neeche spread (...props) me na chala jayein
+                    // 'inline' ka use karke inline code vs code block rendering sahi kar rahe hain
                     code({ node, inline, className, children, ...props }) {
+                      // `node` ko intentionally ignore kar rahe hain (sirf destructure kiya hai taaki spread me na jaye)
+                      void node;
                       const match = /language-(\w+)/.exec(className || "");
-                      
-                      return match ? (
-                        <div className="rounded-md overflow-hidden my-4 border border-gray-700 shadow-md">
-                          <div className="bg-gray-800 px-4 py-1 text-xs text-gray-400 border-b border-gray-700 uppercase tracking-wider">
-                            {match[1]}
+                      const codeText = String(children).replace(/\n$/, "");
+
+                      // Code blocks (inline === false) ko block style me render karein
+                      if (!inline) {
+                        return match ? (
+                          <div className="rounded-md overflow-hidden my-4 border border-gray-700 shadow-md">
+                            <div className="bg-gray-800 px-4 py-1 text-xs text-gray-400 border-b border-gray-700 uppercase tracking-wider">
+                              {match[1]}
+                            </div>
+                            <SyntaxHighlighter
+                              {...props}
+                              style={vscDarkPlus}
+                              language={match[1]}
+                              PreTag="div"
+                              customStyle={{
+                                margin: 0,
+                                padding: "1rem",
+                                backgroundColor: "#0D1117",
+                                fontSize: "13px",
+                              }}
+                            >
+                              {codeText}
+                            </SyntaxHighlighter>
                           </div>
-                          <SyntaxHighlighter
-                            {...props}
-                            style={vscDarkPlus}
-                            language={match[1]}
-                            PreTag="div"
-                            customStyle={{
-                              margin: 0,
-                              padding: "1rem",
-                              backgroundColor: "#0D1117",
-                              fontSize: "13px",
-                            }}
-                          >
-                            {String(children).replace(/\n$/, "")}
-                          </SyntaxHighlighter>
-                        </div>
-                      ) : (
+                        ) : (
+                          <pre className="my-4 overflow-x-auto rounded-md border border-gray-700 bg-[#0D1117] p-4 text-[13px]">
+                            <code
+                              {...props}
+                              className={`font-mono ${className || ""}`}
+                            >
+                              {codeText}
+                            </code>
+                          </pre>
+                        );
+                      }
+
+                      // Inline code
+                      return (
                         <code
                           {...props}
-                          className="bg-gray-800 text-purple-400 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-gray-700"
+                          className={`bg-gray-800 text-purple-400 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-gray-700 ${
+                            className || ""
+                          }`}
                         >
-                          {children}
+                          {codeText}
                         </code>
                       );
                     },
@@ -171,13 +209,19 @@ const AIAssistant = ({ code, language }) => {
       <div className="pt-3 border-t border-gray-800 flex flex-col gap-3">
         <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
           <button
-            onClick={() => handleAnalyze("Analyze this code and give me quality metrics and a review.")}
+            onClick={() =>
+              handleAnalyze(
+                "Analyze this code and give me quality metrics and a review.",
+              )
+            }
             className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full whitespace-nowrap transition"
           >
             📊 Analyze Metrics
           </button>
           <button
-            onClick={() => handleAnalyze("Find bugs and provide a fixed version")}
+            onClick={() =>
+              handleAnalyze("Find bugs and provide a fixed version")
+            }
             className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-full whitespace-nowrap transition"
           >
             🐛 Find Bugs
@@ -189,7 +233,9 @@ const AIAssistant = ({ code, language }) => {
             type="text"
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && userPrompt && handleAnalyze()}
+            onKeyDown={(e) =>
+              e.key === "Enter" && userPrompt && handleAnalyze()
+            }
             placeholder="Ask AI (e.g. Optimize this)..."
             className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-white placeholder-gray-600"
             disabled={loading}
@@ -203,7 +249,11 @@ const AIAssistant = ({ code, language }) => {
                 : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:scale-105 shadow-md"
             }`}
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>
