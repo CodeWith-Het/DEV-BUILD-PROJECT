@@ -11,7 +11,7 @@ Environment Variables
 API Reference
 WebSocket Events
 Contributing
-License
+
 🏗 System Architecture
 
 CollabCode follows a client-server distributed architecture optimized for real-time collaboration and AI-assisted workflows.
@@ -29,6 +29,7 @@ MongoDB Atlas persists user sessions, metadata, and audit logs, while Passport.j
 Multi-user editing with sub-100ms latency
 Character-level synchronization using WebSockets
 Conflict-free editing powered by OT
+
 🧠 AI-Powered Code Review
 Integration with Gemini 2.5 Flash API
 Enforced JSON schema responses
@@ -36,6 +37,7 @@ Analysis dimensions:
 Code Quality
 Security Vulnerabilities
 Performance Efficiency
+
 ⚙️ Operational Transformation Engine
 Custom OT implementation for concurrent edits
 Handles:
@@ -46,18 +48,22 @@ Guarantees:
 Convergence
 Causality Preservation
 Intention Preservation
+
 📊 Dynamic Visualization
 AI response parsed into structured metrics
 Rendered using Recharts Radar Charts
 Real-time updates on code analysis
+
 🔐 Authentication & Authorization
 OAuth 2.0 via Google & GitHub
 Managed with Passport.js
 Session-based authentication
+
 🌐 Socket Architecture
 Room-based isolation (roomId)
 Efficient event broadcasting
 Scalable connection handling
+
 📁 Directory Structure
 CollabCode/
 │
@@ -84,6 +90,7 @@ CollabCode/
 ├── .env
 ├── package.json
 └── README.md
+
 ⚙️ Installation Guide
 🔧 Prerequisites
 Node.js ≥ 18.x
@@ -91,66 +98,51 @@ npm / yarn
 MongoDB Atlas account
 Google & GitHub OAuth credentials
 Gemini API access
+
 📦 Clone Repository
 git clone https://github.com/your-username/collabcode.git
 cd collabcode
+
 🖥️ Client Setup
 cd client
 npm install
 npm run dev
+
 🧠 Server Setup
 cd server
 npm install
 npm run dev
+
 🔐 Environment Variables
+| Variable Name          | Description                     |
+| ---------------------- | ------------------------------- |
+| `PORT`                 | Server port (e.g., 3000)        |
+| `MONGODB_URI`          | MongoDB Atlas connection string |
+| `SESSION_SECRET`       | Secret for session encryption   |
+| `GEMINI_API_KEY`       | Google Gemini API key           |
+| `GOOGLE_CLIENT_ID`     | Google OAuth Client ID          |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Secret             |
+| `GITHUB_CLIENT_ID`     | GitHub OAuth Client ID          |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth Secret             |
+| `CLIENT_URL`           | Frontend URL (for CORS)         |
 
-Create a .env file in the server/ directory:
-
-Variable Name	Description
-PORT	Server port (e.g., 5000)
-MONGODB_URI	MongoDB Atlas connection string
-SESSION_SECRET	Secret for session encryption
-GEMINI_API_KEY	Google Gemini API key
-GOOGLE_CLIENT_ID	Google OAuth Client ID
-GOOGLE_CLIENT_SECRET	Google OAuth Secret
-GITHUB_CLIENT_ID	GitHub OAuth Client ID
-GITHUB_CLIENT_SECRET	GitHub OAuth Secret
-CLIENT_URL	Frontend URL (for CORS)
 📡 API Reference
-Method	Endpoint	Description
-GET	/api/auth/google	Google OAuth login
-GET	/api/auth/github	GitHub OAuth login
-GET	/api/auth/logout	Logout user
-GET	/api/user	Fetch authenticated user
-POST	/api/ai/review	Analyze code using Gemini AI
+| Method | Endpoint           | Description                  |
+| ------ | ------------------ | ---------------------------- |
+| GET    | `/api/auth/google` | Google OAuth login           |
+| GET    | `/api/auth/github` | GitHub OAuth login           |
+| GET    | `/api/auth/logout` | Logout user                  |
+| GET    | `/api/user`        | Fetch authenticated user     |
+| POST   | `/api/ai/review`   | Analyze code using Gemini AI |
+
 🔌 WebSocket Events
-Event Name	Payload	Description
-join_room	{ roomId, userId }	Join collaboration room
-code_change	{ roomId, operation }	Broadcast OT operation
-sync_code	{ roomId, content }	Initial state sync
-leave_room	{ roomId, userId }	Exit room
-cursor_move	{ roomId, position }	Cursor tracking
-🧩 Deep Technical Insights
-🧮 Operational Transformation (OT) Engine
-
-The OT engine is the core consistency mechanism of CollabCode.
-
-Each edit is modeled as an operation (insert, delete)
-Operations are assigned:
-A timestamp
-A revision number
-Incoming operations are transformed against:
-All concurrent operations not yet applied
-Example Conflict Resolution:
-User A: Insert "X" at position 5
-User B: Insert "Y" at position 5
-
-Transformation Result:
-
-One operation is shifted → ensures deterministic ordering
-Final document remains consistent across all clients
-
-This prevents code bleed, cursor jumps, and state divergence.
+| Event Name    | Payload                 | Description             |
+| ------------- | ----------------------- | ----------------------- |
+| `join_room`   | `{ roomId, userId }`    | Join collaboration room |
+| `code_change` | `{ roomId, operation }` | Broadcast OT operation  |
+| `sync_code`   | `{ roomId, content }`   | Initial state sync      |
+| `leave_room`  | `{ roomId, userId }`    | Exit room               |
+| `cursor_move` | `{ roomId, position }`  | Cursor tracking         |
 
 🤖 AI Integration (Gemini 2.5 Flash)
 Strict prompt engineering enforces:
@@ -165,6 +157,7 @@ Ensures:
 Predictable parsing
 No malformed responses
 Deterministic UI rendering
+
 📊 Visualization Pipeline
 AI returns structured JSON
 Backend sanitizes + forwards
@@ -175,6 +168,7 @@ Radar chart dynamically renders:
   { subject: "Security", value: 70 },
   { subject: "Performance", value: 90 }
 ]
+
 ⚡ Socket Architecture
 Each room = isolated namespace
 Server maintains:
