@@ -66,30 +66,23 @@ Scalable connection handling
 
 📁 Directory Structure
 CollabCode/
-│
-├── client/                     # Frontend (React + Vite)
+├── client/                # Frontend (Vite + React)
 │   ├── src/
-│   │   ├── components/        # UI Components
-│   │   ├── pages/             # Route-level pages
-│   │   ├── hooks/             # Custom React hooks
-│   │   ├── utils/             # Helper functions
-│   │   ├── services/          # API & socket services
-│   │   └── App.jsx
-│   ├── public/
+│   │   ├── components/    # Reusable UI Components (Editor, Navbar, Charts)
+│   │   ├── hooks/         # Custom React Hooks for Sockets/AI
+│   │   ├── context/       # State Management (Auth, Room state)
+│   │   ├── App.jsx
+│   │   └── main.jsx
 │   └── vite.config.js
-│
-├── server/                     # Backend (Node.js + Express)
-│   ├── controllers/           # Route handlers
-│   ├── routes/                # REST API routes
-│   ├── sockets/               # Socket.io event handlers
-│   ├── ot/                    # Operational Transformation logic
-│   ├── services/              # AI & external integrations
-│   ├── models/                # MongoDB schemas
-│   └── server.js
-│
-├── .env
-├── package.json
-└── README.md
+├── server/                # Backend (Node.js + Express)
+│   ├── controllers/       # Business Logic (AI processing, Room logic)
+│   ├── models/            # MongoDB Schemas (User, Room, Project)
+│   ├── routes/            # API Endpoints
+│   ├── sockets/           # Socket.io Event Handlers (OT Logic)
+│   ├── config/            # DB & Passport config
+│   └── index.js           # Server Entry Point
+├── .env                   # Environment Variables (Secrets)
+└── package.json
 
 ⚙️ Installation Guide
 🔧 Prerequisites
