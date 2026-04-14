@@ -65,77 +65,7 @@ Efficient event broadcasting
 Scalable connection handling
 
 📁 Directory Structure
-collabcode/
-│
-├── client/                # Frontend (React + Vite)
-│   ├── public/
-│   │   └── index.html
-│   │
-│   ├── src/
-│   │   ├── assets/        # Images, icons
-│   │   ├── components/    # Reusable UI components
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Editor.jsx
-│   │   │   └── Chart.jsx
-│   │   │
-│   │   ├── pages/         # Pages (Routing level)
-│   │   │   ├── Home.jsx
-│   │   │   ├── Login.jsx
-│   │   │   └── Dashboard.jsx
-│   │   │
-│   │   ├── hooks/         # Custom hooks
-│   │   │   └── useSocket.js
-│   │   │
-│   │   ├── services/      # API & socket calls
-│   │   │   ├── api.js
-│   │   │   └── socket.js
-│   │   │
-│   │   ├── utils/         # Helper functions
-│   │   │   └── helpers.js
-│   │   │
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │
-│   ├── vite.config.js
-│   ├── package.json
-│
-│
-├── server/                # Backend (Node + Express)
-│   ├── controllers/       # Logic (business logic)
-│   │   ├── authController.js
-│   │   ├── codeController.js
-│   │
-│   ├── routes/            # API routes
-│   │   ├── authRoutes.js
-│   │   ├── codeRoutes.js
-│   │
-│   ├── models/            # MongoDB schemas
-│   │   ├── User.js
-│   │   ├── Code.js
-│   │
-│   ├── services/          # External services (AI, APIs)
-│   │   ├── geminiService.js
-│   │
-│   ├── sockets/           # Socket.io logic
-│   │   ├── socketHandler.js
-│   │
-│   ├── ot/                # Operational Transformation (collab editing)
-│   │   ├── otHandler.js
-│   │
-│   ├── config/            # Config files
-│   │   ├── db.js
-│   │   ├── passport.js
-│   │
-│   ├── middleware/        # Custom middlewares
-│   │   ├── authMiddleware.js
-│   │
-│   ├── server.js          # Main entry point
-│   ├── .env               # Environment variables
-│   ├── package.json
-│
-│
-├── README.md
-└── package.json (optional root)
+<img width="279" height="598" alt="image" src="https://github.com/user-attachments/assets/9da1f83a-7afd-48aa-b1b7-22393023dbdd" />
 
 ⚙️ Installation Guide
 🔧 Prerequisites
