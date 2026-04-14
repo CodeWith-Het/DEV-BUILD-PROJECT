@@ -65,7 +65,8 @@ Efficient event broadcasting
 Scalable connection handling
 
 📁 Directory Structure
-<img width="800" height="1000" alt="image" src="https://github.com/user-attachments/assets/9da1f83a-7afd-48aa-b1b7-22393023dbdd" />
+<img width="279" height="598" alt="image" src="https://github.com/user-attachments/assets/2bc4f6d8-931a-4a81-831b-74a4b42a7c15" />
+
 
 ⚙️ Installation Guide
 🔧 Prerequisites
