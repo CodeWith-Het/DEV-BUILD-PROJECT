@@ -65,24 +65,77 @@ Efficient event broadcasting
 Scalable connection handling
 
 📁 Directory Structure
-CollabCode/
-├── client/                # Frontend (Vite + React)
+collabcode/
+│
+├── client/                # Frontend (React + Vite)
+│   ├── public/
+│   │   └── index.html
+│   │
 │   ├── src/
-│   │   ├── components/    # Reusable UI Components (Editor, Navbar, Charts)
-│   │   ├── hooks/         # Custom React Hooks for Sockets/AI
-│   │   ├── context/       # State Management (Auth, Room state)
+│   │   ├── assets/        # Images, icons
+│   │   ├── components/    # Reusable UI components
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Editor.jsx
+│   │   │   └── Chart.jsx
+│   │   │
+│   │   ├── pages/         # Pages (Routing level)
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   └── Dashboard.jsx
+│   │   │
+│   │   ├── hooks/         # Custom hooks
+│   │   │   └── useSocket.js
+│   │   │
+│   │   ├── services/      # API & socket calls
+│   │   │   ├── api.js
+│   │   │   └── socket.js
+│   │   │
+│   │   ├── utils/         # Helper functions
+│   │   │   └── helpers.js
+│   │   │
 │   │   ├── App.jsx
-│   │   └── main.jsx
-│   └── vite.config.js
-├── server/                # Backend (Node.js + Express)
-│   ├── controllers/       # Business Logic (AI processing, Room logic)
-│   ├── models/            # MongoDB Schemas (User, Room, Project)
-│   ├── routes/            # API Endpoints
-│   ├── sockets/           # Socket.io Event Handlers (OT Logic)
-│   ├── config/            # DB & Passport config
-│   └── index.js           # Server Entry Point
-├── .env                   # Environment Variables (Secrets)
-└── package.json
+│   │   ├── main.jsx
+│   │
+│   ├── vite.config.js
+│   ├── package.json
+│
+│
+├── server/                # Backend (Node + Express)
+│   ├── controllers/       # Logic (business logic)
+│   │   ├── authController.js
+│   │   ├── codeController.js
+│   │
+│   ├── routes/            # API routes
+│   │   ├── authRoutes.js
+│   │   ├── codeRoutes.js
+│   │
+│   ├── models/            # MongoDB schemas
+│   │   ├── User.js
+│   │   ├── Code.js
+│   │
+│   ├── services/          # External services (AI, APIs)
+│   │   ├── geminiService.js
+│   │
+│   ├── sockets/           # Socket.io logic
+│   │   ├── socketHandler.js
+│   │
+│   ├── ot/                # Operational Transformation (collab editing)
+│   │   ├── otHandler.js
+│   │
+│   ├── config/            # Config files
+│   │   ├── db.js
+│   │   ├── passport.js
+│   │
+│   ├── middleware/        # Custom middlewares
+│   │   ├── authMiddleware.js
+│   │
+│   ├── server.js          # Main entry point
+│   ├── .env               # Environment variables
+│   ├── package.json
+│
+│
+├── README.md
+└── package.json (optional root)
 
 ⚙️ Installation Guide
 🔧 Prerequisites
